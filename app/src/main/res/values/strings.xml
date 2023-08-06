@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">BluetoothSample</string>
+    <string name="servicedesc">HCE_APDU_Service</string>
+    <string name="aiddescription">HCE_APDU_Service AID</string>
+    <string name="nfc">NFC読み取り</string>
+    <string name="address">アドレス取得</string>
+</resources>
