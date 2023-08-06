@@ -9,10 +9,12 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -20,15 +22,17 @@ import androidx.annotation.Nullable;
 
 public class BluetoothDeviceService extends Service {
 
+    private static final String SECURE_SETTINGS_BLUETOOTH_ADDRESS = "bluetooth_address";
+
     private BluetoothManager bluetoothManager;
     private BluetoothAdapter bluetoothAdapter;
+    private BluetoothDevice bluetoothDevice;
     private Context context;
 
     private IBluetoothDeviceService.Stub mStub = new IBluetoothDeviceService.Stub() {
-        @SuppressLint("HardwareIds")
         @Override
         public  String getBluetoothAddress() {
-            return bluetoothAdapter.getAddress();
+            return Settings.Secure.getString(getContentResolver(), SECURE_SETTINGS_BLUETOOTH_ADDRESS);
         }
     };
 
@@ -39,9 +43,6 @@ public class BluetoothDeviceService extends Service {
         context = getApplicationContext();
         bluetoothManager = context.getSystemService(BluetoothManager.class);
         bluetoothAdapter = bluetoothManager.getAdapter();
-
-        String address = bluetoothAdapter.getAddress();
-        Log.d(TAG, "onCreate: " + address);
     }
 
     @Override
