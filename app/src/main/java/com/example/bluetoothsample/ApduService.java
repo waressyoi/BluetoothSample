@@ -49,8 +49,6 @@ public class ApduService extends HostApduService {
     public void onCreate() {
         super.onCreate();
         Log.d(_TAG, "onCreate");
-
-
     }
 
     @Override
