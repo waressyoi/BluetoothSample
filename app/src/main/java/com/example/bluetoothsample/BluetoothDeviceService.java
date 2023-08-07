@@ -19,6 +19,9 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+
 
 public class BluetoothDeviceService extends Service {
 
@@ -31,8 +34,14 @@ public class BluetoothDeviceService extends Service {
 
     private IBluetoothDeviceService.Stub mStub = new IBluetoothDeviceService.Stub() {
         @Override
-        public  String getBluetoothAddress() {
-            return Settings.Secure.getString(getContentResolver(), SECURE_SETTINGS_BLUETOOTH_ADDRESS);
+        public String getBluetoothAddress() {
+
+            String address = Settings.Secure.getString(getContentResolver(), SECURE_SETTINGS_BLUETOOTH_ADDRESS);
+
+            if (address == null) {
+                address = getBluetoothMacAddress();
+            }
+            return address;
         }
     };
 
@@ -62,15 +71,15 @@ public class BluetoothDeviceService extends Service {
         );
 
         NotificationManager notificationManager =
-                (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Notification　Channel 設定
         NotificationChannel channel = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             channel = new NotificationChannel(
-                    channelId, title , NotificationManager.IMPORTANCE_DEFAULT);
+                    channelId, title, NotificationManager.IMPORTANCE_DEFAULT);
 
-            if(notificationManager != null){
+            if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
 
                 Notification notification = new Notification.Builder(context, channelId)
@@ -88,7 +97,7 @@ public class BluetoothDeviceService extends Service {
             }
         } else {
 
-            if(notificationManager != null) {
+            if (notificationManager != null) {
 
                 Notification notification = new Notification.Builder(context)
                         .setContentTitle(title)
@@ -112,9 +121,31 @@ public class BluetoothDeviceService extends Service {
     public void onDestroy() {
         super.onDestroy();
     }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mStub.asBinder();
+    }
+
+    @SuppressLint("HardwareIds")
+    private String getBluetoothMacAddress() {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        String bluetoothMacAddress = "";
+        try {
+            @SuppressLint("DiscouragedPrivateApi")
+            Field mServiceField = bluetoothAdapter.getClass().getDeclaredField("mService");
+            mServiceField.setAccessible(true);
+
+            Object btManagerService = mServiceField.get(bluetoothAdapter);
+
+            if (btManagerService != null) {
+                bluetoothMacAddress = (String) btManagerService.getClass().getMethod("getAddress").invoke(btManagerService);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return bluetoothMacAddress;
     }
 }
